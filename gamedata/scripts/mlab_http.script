@@ -1,5 +1,7 @@
 -- Constants
 local UPDATE_INTERVAL = 50
+local INPATH = mlab_io.get_file_from_config("mlab_http_input.txt")
+local OUTPATH = mlab_io.get_file_from_config("mlab_http_output.txt")
 
 -- Globals
 local request_counter = 0
@@ -26,14 +28,12 @@ function fetch(method, url, data, callback)
         method = method
     }
 
-    mlab_io.send_message(mlab_json.stringify(message))
+    mlab_io.send_message(OUTPATH, mlab_json.stringify(message))
     request_counter = request_counter + 1
 
     message.callback = callback
     message.cancel = function () requests[id] = nil end
     requests[id] = message
-
-    news_manager.send_tip(db.actor, ("Send request -> url: %s, data: %s"):format(message.url, mlab_json.stringify(message.data)), nil, nil, 30000)
 
     return message
 end
@@ -49,14 +49,13 @@ local function count_pending_requests()
 end
 
 local function handle_responses()
-    local messages = mlab_io.read_messages();
+    local messages = mlab_io.read_messages(INPATH, true);
 
     for _, message in ipairs(messages) do
         --- @type Response 
         if message:len() > 0 then
             local response = mlab_json.parse(message)
             local request = requests[response.id]
-            news_manager.send_tip(db.actor, ("Load request -> url: %s, status: %s, data: %s"):format(response.url, response.status, mlab_json.stringify(response.data)), nil, nil, 30000)
 
             request.callback(response)
             request.cancel()
@@ -64,11 +63,10 @@ local function handle_responses()
     end
 end
 
-
 local last_update = 0
 
---- Once every 250 ms (UPDATE_INTERVAL) updates the queue of mess received and to be sent.
 local function update()
+    --- Once every 250 ms (UPDATE_INTERVAL)
     if not db.actor or time_global() < last_update + UPDATE_INTERVAL then
         return
     end

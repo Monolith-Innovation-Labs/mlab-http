@@ -1,42 +1,61 @@
 --| Interface for external application
 --| By TKGP, Amon
 
--- Constants
-local INPATH = getFS():update_path("$game_config$", "") .. "\\crc_input.txt"
-local OUTPATH = getFS():update_path("$game_config$", "") .. "\\crc_output.txt"
 
-
---- Writes all message to a crc_output.txt file. 
---- @param message string
---- @param ... any
-function send_message(message, ...)
-    local line = message:format(...).."\n"
-    local output = io.open(OUTPATH, "a")
-
-    if output then
-        output:write(line)
-		output:close()
-	end
+--- Return path to file ('stalker/gamedata/config/file')
+--- @param file string
+--- @return string
+function get_file_from_config(file)
+	return getFS():update_path("$game_config$", "") .. "\\" .. file
 end
 
---- Returns all messages received by the exe app. (It reads them from the crc_input.txt)
---- @return string[]
-function read_messages()
-	local input = io.open(INPATH, "r")
-	local receive_queue = {}
 
-    if input then
+--- Writes all message to a file.
+--- It appends data to the file. Doesn't clear it.
+--- @param file string
+--- @param message string
+--- @param ... any
+function send_message(file, message, ...)
+    local line = message:format(...).."\n"
+    local output, err = io.open(file, "a")
+
+	if not output then
+        error("Could not open file (" .. file .. ") for writing: " .. (err or "unknown error"))
+		return
+	end
+
+	output:write(line)
+	output:flush()
+	output:close()
+end
+
+
+--- Returns all messages received by the exe app. (It reads them from file)
+--- @param file string
+--- @param clear boolean if true file will be cleared after read.
+--- @return string[]
+function read_messages(file, clear)
+	local receive_queue = {}
+	local input, err = io.open(file, "r")
+
+	if input then
 		for line in input:lines() do
 			table.insert(receive_queue, line)
 		end
 
 		input:close()
+	else
+		error("Could not open file (" .. file .. ")  for reading: " .. (err or "unknown error"))
 	end
 
-	input = io.open(INPATH, "w+")
+	if clear then
+		input, err = io.open(file, "w+")
 
-	if input then
-		input:write("")
+		if input then
+			input:write("")
+        else
+            error("Could not open file (" .. file .. ")  for writing: " .. (err or "unknown error"))
+		end
 	end
 
 	return receive_queue

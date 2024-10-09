@@ -463,7 +463,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "mlab_client"
+name = "mlab_http"
 version = "0.1.0"
 dependencies = [
  "reqwest",
