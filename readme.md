@@ -1,5 +1,5 @@
 # HTTP Library for Stalker Anomaly
-This library adds options for sending HTTP requests from Lua in Stalker.
+Stalker library that adds sending HTTP requests via Lua.
 
 ## How Does It Work?
 The library is divided into two parts. The `gamedata` folder contains a Lua library designed to send requests to the EXE application. The second part, written in Rust, acts as a mediator: it collects requests sent from Lua, sends them out, waits for responses, and then passes them back to Lua.
