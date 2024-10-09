@@ -1,0 +1,86 @@
+-- Constants
+local UPDATE_INTERVAL = 50
+
+-- Globals
+local request_counter = 0
+
+--- @type { [number]: Request }
+local requests = {}
+
+---@alias HttpMethod "get" | "post" | "put" | "patch" | "delete"
+---@alias Response { id: number, method: HttpMethod, url: string, data: table, status: number }
+---@alias Request { id: number, method: HttpMethod, url: string, data: table | nil, callback: fun(data: Response), cancel: fun()}
+
+--- @param method HttpMethod
+--- @param data table | nil Optional data to send with the request (can be nil).
+--- @param callback fun(res: Response)
+--- @return Request
+function fetch(method, url, data, callback)
+    local id = request_counter
+
+    --- @type Request
+    local message = {
+        id = id,
+        url = url,
+        data = data,
+        method = method
+    }
+
+    mlab_io.send_message(mlab_json.stringify(message))
+    request_counter = request_counter + 1
+
+    message.callback = callback
+    message.cancel = function () requests[id] = nil end
+    requests[id] = message
+
+    news_manager.send_tip(db.actor, ("Send request -> url: %s, data: %s"):format(message.url, mlab_json.stringify(message.data)), nil, nil, 30000)
+
+    return message
+end
+
+local function count_pending_requests()
+    local items = 0
+
+    for k,v in pairs(requests) do
+        items = items + 1
+    end
+
+    return items
+end
+
+local function handle_responses()
+    local messages = mlab_io.read_messages();
+
+    for _, message in ipairs(messages) do
+        --- @type Response 
+        if message:len() > 0 then
+            local response = mlab_json.parse(message)
+            local request = requests[response.id]
+            news_manager.send_tip(db.actor, ("Load request -> url: %s, status: %s, data: %s"):format(response.url, response.status, mlab_json.stringify(response.data)), nil, nil, 30000)
+
+            request.callback(response)
+            request.cancel()
+        end
+    end
+end
+
+
+local last_update = 0
+
+--- Once every 250 ms (UPDATE_INTERVAL) updates the queue of mess received and to be sent.
+local function update()
+    if not db.actor or time_global() < last_update + UPDATE_INTERVAL then
+        return
+    end
+
+    if count_pending_requests() <= 0 then
+        return
+    end
+
+    last_update = time_global()
+	handle_responses()
+end
+
+function on_game_start()
+	AddUniqueCall(update)
+end

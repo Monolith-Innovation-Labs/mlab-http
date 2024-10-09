@@ -1,0 +1,43 @@
+--| Interface for external application
+--| By TKGP, Amon
+
+-- Constants
+local INPATH = getFS():update_path("$game_config$", "") .. "\\crc_input.txt"
+local OUTPATH = getFS():update_path("$game_config$", "") .. "\\crc_output.txt"
+
+
+--- Writes all message to a crc_output.txt file. 
+--- @param message string
+--- @param ... any
+function send_message(message, ...)
+    local line = message:format(...).."\n"
+    local output = io.open(OUTPATH, "a")
+
+    if output then
+        output:write(line)
+		output:close()
+	end
+end
+
+--- Returns all messages received by the exe app. (It reads them from the crc_input.txt)
+--- @return string[]
+function read_messages()
+	local input = io.open(INPATH, "r")
+	local receive_queue = {}
+
+    if input then
+		for line in input:lines() do
+			table.insert(receive_queue, line)
+		end
+
+		input:close()
+	end
+
+	input = io.open(INPATH, "w+")
+
+	if input then
+		input:write("")
+	end
+
+	return receive_queue
+end

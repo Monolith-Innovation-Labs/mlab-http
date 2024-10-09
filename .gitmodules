@@ -1,0 +1,3 @@
+[submodule ".lua"]
+	path = .lua
+	url = https://github.com/Monolith-Innovation-Labs/lls-xray-monolith-addon.git

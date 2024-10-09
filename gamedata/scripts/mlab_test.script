@@ -1,0 +1,11 @@
+function on_game_start()
+    RegisterScriptCallback("on_key_press", on_key_press)
+end
+
+function on_key_press(key)
+    if key == DIK_keys.DIK_O then 
+        mlab_http.fetch("get", "https://swapi.dev/api/films/1", nil, function (res)
+            news_manager.send_tip(db.actor, ("Callback -> url: %s, status: %s, data: %s"):format(res.url, res.status, mlab_json.stringify(res.data)), nil, nil, 30000)
+        end)
+    end
+end
