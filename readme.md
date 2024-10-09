@@ -61,4 +61,4 @@ end
 ```
 
 ## Planed features
-- [] make request async
+- [ ] make request async
