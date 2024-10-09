@@ -6,6 +6,21 @@ The library is divided into two parts. The `gamedata` folder contains a Lua libr
 
 Communication between Lua and Rust is based on the files `mlab_http_input.txt` and `mlab_http_output.txt`. When you call the function `mlab_http.fetch("GET", "example.com", {}, callback)`, it will write a request to send an HTTP request into the `mlab_http_output.txt` file. The Rust application will then read this file and execute the request, and the response will be saved to the `mlab_http_input.txt` file. Lua checks this file every 250 ms; if it is not empty, it checks if the callback has not been canceled, and then executes the callback function.
 
+## Installation - Mod Manager
+Install it via ModOrganizer2 like any other mod.
+
+## Installation - Classic
+**REPLACE FILES if needed.**
+1. Download the [mlab_http.zip](https://github.com/Monolith-Innovation-Labs/mlab-http/releases)
+2. Extract the contents of `mlab_http.zip` into  game directory
+
+# For Developers
+## How to use rust lib?
+Add to `cargo.toml`
+```toml
+mlab_http = { git = "https://github.com/Monolith-Innovation-Labs/mlab-http.git", features = ["log"] }
+```
+
 ## Functions
 ### `mlab_http.fetch(method, url, data, callback)` 
 Sends an HTTP request. 
